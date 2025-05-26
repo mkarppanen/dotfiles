@@ -1,0 +1,109 @@
+"Plugins with vim-plug
+call plug#begin('~/.vim/plugged')
+
+"Plug 'tpope/vim-sensible'
+Plug 'dense-analysis/ale'
+Plug 'ajh17/VimCompletesMe'
+Plug 'danilo-augusto/vim-afterglow'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+Plug 'ctrlpvim/ctrlp.vim'
+
+call plug#end()
+
+colorscheme afterglow
+
+set autowriteall
+set nocompatible
+set expandtab
+set shiftwidth=4
+syntax on
+filetype plugin indent on
+
+" Enable folding
+set foldmethod=indent
+set foldlevel=99
+
+" Automatically deletes all trailing whitespace on save.
+autocmd BufWritePre * %s/\s\+$//e
+
+" Split navigation
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
+
+" Splits open towards bottom and right
+set splitbelow splitright
+
+" Persistent undo between sessions
+set undodir=~/.vim/undodir
+set undofile
+
+set tags=tags
+
+" Hybrid relative line numbers only in active window in command mode
+:set number relativenumber
+
+:augroup numbertoggle
+:  autocmd!
+:  autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+:  autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+:augroup END
+
+" YAML 2-space indent
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+" Setup zettelkasten
+let g:zettelkasten = "$HOME/zettelkasten/"
+command! -nargs=1 NewZettel :execute ":e" zettelkasten . strftime("%Y%m%d%H%M") . "-<args>.md"
+nnoremap <leader>nz :NewZettel
+
+" Go to index of notes and set working directory to my notes
+nnoremap <leader>ni :execute ":e" zettelkasten . "indeksi.md" \| :execute ":cd" zettelkasten<CR>
+nnoremap <leader>ns :execute ":e" zettelkasten . "saapuneet.md" \| :execute ":cd" zettelkasten<CR>
+
+" FZF bindings
+nnoremap <silent> <leader>f :FZF<cr>
+nnoremap <silent> <leader>F :FZF ~<cr>
+
+nnoremap <silent><leader>gf :FZF -q <C-R>=expand("<cword>")<CR><CR>
+
+" markdown
+au BufNewFile,BufRead *.markdown,*.mdown,*.mkd,*.mkdn,*.mdwn,*.md  set ft=markdown
+
+function Gf()
+    try
+        exec "normal! gf"
+    catch /E447/
+        edit <cfile>.md
+    endtry
+endfunction
+
+autocmd FileType markdown noremap gf :call Gf()<CR>
+autocmd FileType markdown setlocal suffixesadd=.md
+autocmd FileType markdown setlocal tw=88
+autocmd FileType markdown setlocal fo+=t
+autocmd FileType markdown setlocal fo-=l
+
+" CtrlP function for inserting a markdown link with Ctrl-X
+function! CtrlPOpenFunc(action, line)
+    if a:action =~ '^h$'
+        " Get the filename
+        let filename = fnameescape(fnamemodify(a:line, ':t'))
+        let filename_wo_timestamp = fnameescape(fnamemodify(a:line, ':t:s/\d+-//'))
+
+        " Close CtrlP
+        call ctrlp#exit()
+        call ctrlp#mrufiles#add(filename)
+
+        " Insert the markdown link to the file in the current buffer
+        let mdlink = "[ ".filename_wo_timestamp." ]( ".filename." )"
+        put=mdlink
+    else
+        " Use CtrlP's default file opening function
+        call call('ctrlp#acceptfile', [a:action, a:line])
+    endif
+endfunction
+
+let g:ctrlp_open_func = { 'files': 'CtrlPOpenFunc', 'mru files': 'CtrlPOpenFunc' }

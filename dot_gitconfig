@@ -1,0 +1,12 @@
+[user]
+	name = Matti Karppanen
+	email = matti.karppanen@advian.fi
+[core]
+	editor = nvim
+[alias]
+	logline = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	up = pull --rebase --autostash
+[url "https://github.com/"]
+	insteadOf = git://github.com/
+[init]
+	defaultBranch = main
