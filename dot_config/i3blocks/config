@@ -1,0 +1,7 @@
+command=.scripts/statusbar/$BLOCK_NAME
+separator_block_width=15
+markup=none
+
+[time]
+command=date '+%a %d.%m.%Y %H:%M:%S'
+interval=10
