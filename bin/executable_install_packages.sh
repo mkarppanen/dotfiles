@@ -1,4 +1,26 @@
 #/bin/bash
+
+# Instructions:
+#
+#   Edit the packages.csv file to add packages you want to install.
+#   The file should be located at $HOME/.config/dotfiles/packages.csv.
+#   The format is:
+#   ```
+#   command_name,package_manager,package_name,system_type,description,github_repo_fallback
+#   ```
+#
+#   command_name: The name of the command to check if it's already installed.
+#   package_manager: The package manager, this is tied to the package name. 
+#                    Use "_default" for packages that can be installed with any package manager.
+#                    The idea is that most packages use "_default", and only set otherwise if names differ.
+#                    Supported package managers: apt, dnf, yay, apk.
+#                    Note that "_default" must have the prefix underscore.
+#   package_name: The actual package name to install.
+#   system_type: The system type, e.g., "headless", "desktop", etc. Use "all" for packages that apply to all systems.
+#   description: A brief description of the package.
+#   github_repo_fallback: Optional GitHub repository to install from if the package manager fails. format: "user/repo".
+#   Uses the script get_latest_git_release.sh.
+
 PACKAGES_FILE="$HOME/.config/dotfiles/packages.csv"
 PM=
 DISTRO=
@@ -138,14 +160,16 @@ while IFS=, read -r name pkg_man pkg stype notes github; do
         echo "${name} is already installed. Skipping."
         continue
     fi
-    eval "sudo $INSTALLCOMMAND $pkg" || {
+    # Build the install command as an array
+    install_cmd=(sudo $INSTALLCOMMAND "$pkg")
+    if ! "${install_cmd[@]}"; then
         if [ -n "$github" ]; then
             github_install "$github" "$name"
         else
             echo -e "\033[31mFailed to install $pkg using $PM. Continuing with next package.\033[0m"
         fi
         continue
-    }
+    fi
 done < "$tempfile"
 
 
@@ -168,3 +192,28 @@ else
     exit 1
 fi
 
+
+# Install any additional packages that are not in the packages.csv file
+
+## oh-my-zsh, the Zsh framework
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    echo "Installing oh-my-zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || {
+        echo -e "\033[31mFailed to install oh-my-zsh. Continuing with next package.\033[0m"
+    }
+else
+    echo "oh-my-zsh is already installed."
+fi
+
+## yq, the YAML processor
+if ! command -v yq &> /dev/null; then
+    echo "Installing yq..."
+    if sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq && \
+       sudo chmod +x /usr/local/bin/yq; then
+        echo "yq installed successfully."
+    else
+        echo -e "\033[31mFailed to install yq. Please check your network connection and permissions.\033[0m"
+    fi
+else
+    echo "yq is already installed."
+fi

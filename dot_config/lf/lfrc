@@ -36,6 +36,8 @@ cmd unarchive ${{
 
 cmd zip %zip -r "$f" "$f"
 cmd tar %tar cvf "$f.tar" "$f"
+cmd 7zip %7z a "$f.7z" "$f"
+cmr rar %rar a "$f.rar" "$f"
 cmd targz %tar cvzf "$f.tar.gz" "$f"
 cmd tarbz2 %tar cjvf "$f. tar.bz2" "$f"
 
@@ -58,6 +60,8 @@ map md mkdir
 
 #Archive Mappings
 map az zip
+map a7 7zip
+map ar rar
 map at tar
 map ag targz
 map ab tarbz2
